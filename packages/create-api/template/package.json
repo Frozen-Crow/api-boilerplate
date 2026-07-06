@@ -1,0 +1,40 @@
+{
+    "name": "my-api",
+    "version": "0.1.0",
+    "description": "API built on @frozencrow/api-core",
+    "private": true,
+    "engines": {
+        "node": ">= 20.0.0"
+    },
+    "scripts": {
+        "dev": "nodemon -x ts-node src/index.ts",
+        "compile": "shx rm -rf lib/ && tsc",
+        "start": "node lib/",
+        "generate": "frozencrow generate",
+        "secret": "frozencrow secret",
+        "mocha": "cross-env NODE_ENV=test mocha test/ --require ts-node/register --recursive --extension .ts --exit",
+        "test": "npm run mocha"
+    },
+    "overrides": {
+        "config": "3.3.9"
+    },
+    "dependencies": {
+        "@frozencrow/api-core": "^0.1.2",
+        "@feathersjs/configuration": "^5.0.37",
+        "@feathersjs/feathers": "^5.0.37",
+        "@feathersjs/mongodb": "^5.0.37",
+        "@feathersjs/schema": "^5.0.37",
+        "@feathersjs/typebox": "^5.0.37"
+    },
+    "devDependencies": {
+        "@feathersjs/rest-client": "^5.0.37",
+        "@types/mocha": "^10.0.10",
+        "@types/node": "^24.10.4",
+        "cross-env": "^10.1.0",
+        "mocha": "^11.7.5",
+        "nodemon": "^3.1.11",
+        "shx": "^0.4.0",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.9.3"
+    }
+}

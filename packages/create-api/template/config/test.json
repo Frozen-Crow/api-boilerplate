@@ -1,0 +1,6 @@
+{
+    "appName": "My API (test)",
+    "port": 8998,
+    "origins": ["http://localhost:5173"],
+    "mongodb": "mongodb://localhost:27017/my-api-test"
+}

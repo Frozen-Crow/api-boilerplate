@@ -1,0 +1,30 @@
+{
+    "name": "@frozencrow/create-api",
+    "version": "0.1.2",
+    "description": "Scaffold a new API project powered by @frozencrow/api-core",
+    "license": "MIT",
+    "author": "Eric Uldall",
+    "keywords": [
+        "feathers",
+        "scaffold",
+        "generator",
+        "create",
+        "api"
+    ],
+    "engines": {
+        "node": ">= 20.0.0"
+    },
+    "bin": {
+        "create-api": "bin/create-api.js"
+    },
+    "files": [
+        "bin",
+        "template"
+    ],
+    "scripts": {
+        "build": "node -e \"process.exit(0)\""
+    },
+    "publishConfig": {
+        "access": "public"
+    }
+}

@@ -1,0 +1,9 @@
+{{? it.title}}
+{{=it.title}}
+
+{{?}}
+{{=it.content}}
+
+{{? it.actionLink && it.actionText}}
+{{=it.actionText}}: {{=it.actionLink}}
+{{?}}

@@ -1,0 +1,23 @@
+<h2>Welcome{{? it.name }}, {{=it.name}}{{?}}!</h2>
+
+<p>Thank you for joining {{=it.appName}}. We're excited to have you on board!</p>
+
+{{? it.email}}
+<p>Your account has been created with the email: <strong>{{=it.email}}</strong></p>
+{{?}}
+
+{{? it.activationLink}}
+<p>To get started, please activate your account by clicking the button below:</p>
+<div style="text-align: center;">
+  <a href="{{=it.activationLink}}" class="btn">Activate Account</a>
+</div>
+{{?}}
+
+{{? it.temporaryPassword}}
+<div style="margin: 20px 0; padding: 15px; background-color: #f1f5f9; border-radius: 6px;">
+  <p style="margin: 0;">Your temporary password is: <strong style="font-family: monospace; font-size: 16px;">{{=it.temporaryPassword}}</strong></p>
+  <p style="margin: 5px 0 0 0; font-size: 13px; color: #64748b;">Please change this password after your first login.</p>
+</div>
+{{?}}
+
+<p>If you have any questions, please don't hesitate to reach out to our support team.</p>

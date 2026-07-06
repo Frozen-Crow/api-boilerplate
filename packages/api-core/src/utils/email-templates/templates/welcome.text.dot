@@ -1,0 +1,18 @@
+Welcome{{? it.name }}, {{=it.name}}{{?}}!
+
+Thank you for joining {{=it.appName}}. We're excited to have you on board!
+
+{{? it.email}}
+Your account has been created with the email: {{=it.email}}
+{{?}}
+
+{{? it.activationLink}}
+To get started, please activate your account by visiting: {{=it.activationLink}}
+{{?}}
+
+{{? it.temporaryPassword}}
+Your temporary password is: {{=it.temporaryPassword}}
+Please change this password after your first login.
+{{?}}
+
+If you have any questions, please don't hesitate to reach out to our support team.

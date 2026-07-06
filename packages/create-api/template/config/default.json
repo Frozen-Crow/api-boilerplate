@@ -1,0 +1,30 @@
+{
+    "appName": "My API",
+    "host": "localhost",
+    "port": 3030,
+    "public": "./public",
+    "clientHost": "http://localhost:5173",
+    "origins": ["http://localhost:5173"],
+    "seed": true,
+    "paginate": {
+        "default": 10,
+        "max": 50
+    },
+    "mongodb": "mongodb://localhost:27017/my-api",
+    "authentication": {
+        "entity": "user",
+        "service": "users",
+        "secret": "CHANGE_ME_IN_PRODUCTION",
+        "authStrategies": ["jwt", "local"],
+        "jwtOptions": {
+            "header": { "typ": "access" },
+            "audience": "https://example.com",
+            "algorithm": "HS256",
+            "expiresIn": "1d"
+        },
+        "local": {
+            "usernameField": "email",
+            "passwordField": "password"
+        }
+    }
+}

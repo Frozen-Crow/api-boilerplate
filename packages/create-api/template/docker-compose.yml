@@ -1,0 +1,37 @@
+services:
+  api:
+    build: .
+    ports:
+      - "3030:3030"
+    environment:
+      - NODE_ENV=development
+      - PORT=3030
+      # Connect to the mongodb service on its in-network port (27017),
+      # not the host-published one.
+      - MONGODB_URI=mongodb://mongodb:27017/my-api
+      - MAIL_HOST=smtp4dev
+      - MAIL_PORT=25
+      - ORIGINS=http://localhost:5173
+      # Override with a strong value in any non-local environment.
+      - AUTH_SECRET=dev-only-secret-change-me-32-chars!!
+    depends_on:
+      - mongodb
+      - smtp4dev
+
+  mongodb:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+  smtp4dev:
+    image: rnwood/smtp4dev:latest
+    ports:
+      - "8888:80"   # Web UI
+      - "2526:25"   # SMTP Port (external)
+    environment:
+      - ServerOptions__HostName=smtp4dev
+
+volumes:
+  mongodb_data:

@@ -1,0 +1,27 @@
+{
+    "name": "frozencrow-api-workspace",
+    "private": true,
+    "version": "0.0.1",
+    "description": "Workspace root for @frozencrow/api-core and @frozencrow/create-api",
+    "engines": {
+        "node": ">= 20.0.0"
+    },
+    "workspaces": [
+        "packages/api-core",
+        "packages/create-api",
+        "packages/create-api/template"
+    ],
+    "overrides": {
+        "config": "3.3.9"
+    },
+    "scripts": {
+        "build": "npm run build --workspaces --if-present",
+        "test": "npm run test --workspaces --if-present",
+        "bump": "node scripts/bump.mjs",
+        "prettier": "prettier \"packages/**/*.ts\" --write"
+    },
+    "devDependencies": {
+        "prettier": "^3.7.4",
+        "typescript": "^5.9.3"
+    }
+}

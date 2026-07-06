@@ -1,0 +1,13 @@
+{{? it.title}}
+<h1>{{=it.title}}</h1>
+{{?}}
+
+<div class="content">
+  {{=it.content}}
+  
+  {{? it.actionLink && it.actionText}}
+  <p style="text-align: center;">
+    <a href="{{=it.actionLink}}" class="btn">{{=it.actionText}}</a>
+  </p>
+  {{?}}
+</div>

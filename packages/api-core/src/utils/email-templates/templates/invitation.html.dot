@@ -1,0 +1,30 @@
+<h2>You've been invited!</h2>
+
+{{? it.inviterName}}
+<p><strong>{{=it.inviterName}}</strong> has invited you to join {{? it.organizationName}}<strong>{{=it.organizationName}}</strong> on{{?}} {{=it.appName}}.</p>
+{{??}}
+<p>You've been invited to join {{? it.organizationName}}<strong>{{=it.organizationName}}</strong> on{{?}} {{=it.appName}}.</p>
+{{?}}
+
+{{? it.role}}
+<p>You'll be joining as: <strong>{{=it.role}}</strong></p>
+{{?}}
+
+{{? it.invitationLink}}
+<p>Click the button below to accept the invitation and get started:</p>
+<div style="text-align: center;">
+  <a href="{{=it.invitationLink}}" class="btn">Accept Invitation</a>
+</div>
+<p style="margin-top: 30px; font-size: 13px; color: #64748b;">
+  Or copy and paste this link into your browser:<br>
+  <a href="{{=it.invitationLink}}" style="color: #0ea5e9;">{{=it.invitationLink}}</a>
+</p>
+{{?}}
+
+{{? it.expiresAt}}
+<div style="margin-top: 20px; padding: 15px; background-color: #fef9c3; border-left: 4px solid #eab308; color: #854d0e; font-size: 14px;">
+  <strong>Note:</strong> This invitation expires on {{=it.expiresAt}}.
+</div>
+{{?}}
+
+<p style="margin-top: 30px; font-size: 14px; color: #94a3b8;">If you didn't expect this invitation, you can safely ignore this email.</p>

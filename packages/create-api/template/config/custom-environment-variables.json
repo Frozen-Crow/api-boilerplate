@@ -1,0 +1,15 @@
+{
+    "port": "PORT",
+    "mongodb": "MONGODB_URI",
+    "clientHost": "CLIENT_HOST",
+    "authentication": {
+        "secret": "AUTH_SECRET"
+    },
+    "mail": {
+        "host": "MAIL_HOST",
+        "port": {
+            "__name": "MAIL_PORT",
+            "__format": "number"
+        }
+    }
+}
