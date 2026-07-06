@@ -4,6 +4,15 @@
     "description": "Batteries-included Feathers 5 + Koa + MongoDB core: auth, RBAC, and multitenant access control",
     "license": "MIT",
     "author": "Eric Uldall",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Frozen-Crow/api-boilerplate.git",
+        "directory": "packages/api-core"
+    },
+    "homepage": "https://github.com/Frozen-Crow/api-boilerplate#readme",
+    "bugs": {
+        "url": "https://github.com/Frozen-Crow/api-boilerplate/issues"
+    },
     "keywords": [
         "feathers",
         "koa",

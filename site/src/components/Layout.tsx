@@ -1,7 +1,7 @@
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useEffect } from 'react'
 
-const GITHUB = 'https://github.com/frozencrow/api-boilerplate'
+const GITHUB = 'https://github.com/Frozen-Crow/api-boilerplate'
 const NPM = 'https://www.npmjs.com/package/@frozencrow/api-core'
 
 export function Layout() {

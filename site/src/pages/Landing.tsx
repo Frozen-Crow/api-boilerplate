@@ -225,7 +225,7 @@ export function Landing() {
               </Link>
               <a
                 className="btn btn-ghost"
-                href="https://github.com/frozencrow/api-boilerplate"
+                href="https://github.com/Frozen-Crow/api-boilerplate"
                 target="_blank"
                 rel="noreferrer"
               >

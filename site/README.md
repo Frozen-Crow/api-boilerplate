@@ -37,5 +37,5 @@ src/
   content/              generated from packages/*/README.md (git-ignored)
 ```
 
-> The GitHub URL in `src/components/Layout.tsx` is a placeholder —
-> update it to your repository.
+Links point at [github.com/Frozen-Crow/api-boilerplate](https://github.com/Frozen-Crow/api-boilerplate)
+(defined in `src/components/Layout.tsx`).

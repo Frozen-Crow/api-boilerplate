@@ -4,6 +4,15 @@
     "description": "Scaffold a new API project powered by @frozencrow/api-core",
     "license": "MIT",
     "author": "Eric Uldall",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Frozen-Crow/api-boilerplate.git",
+        "directory": "packages/create-api"
+    },
+    "homepage": "https://github.com/Frozen-Crow/api-boilerplate#readme",
+    "bugs": {
+        "url": "https://github.com/Frozen-Crow/api-boilerplate/issues"
+    },
     "keywords": [
         "feathers",
         "scaffold",
