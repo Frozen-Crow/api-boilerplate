@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "sync-docs": "node scripts/sync-docs.mjs",
+    "gen:og": "node scripts/gen-og.mjs",
     "predev": "npm run sync-docs",
     "dev": "vite",
     "prebuild": "npm run sync-docs",
@@ -22,6 +23,7 @@
     "remark-gfm": "^4.0.0"
   },
   "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
