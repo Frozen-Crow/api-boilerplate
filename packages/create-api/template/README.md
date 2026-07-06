@@ -30,23 +30,23 @@ Generate a fresh secret any time with `npm run secret -- --write` (updates
 ## Where things live
 
 - `src/app.ts` — builds the app with `createConfiguredApp()` from
-  `@frozencrow/api-core` and registers your own services.
-- `src/services/widgets/` — an example multitenant service. Copy this folder as
-  the pattern for new resources: a `.schema.ts`, a `.class.ts`, and a registration
-  file that calls `generateDefaultHooks({ schema })` — or run
-  `npx frozencrow g service <name>`.
+  `@frozencrow/api-core`.
+- `src/services/index.ts` — registers your services. This is where scaffolded
+  and generated services get wired in.
+- `src/services/<name>/` — each service is three files: a `.schema.ts`, a
+  `.class.ts`, and a registration file that calls `generateDefaultHooks({ schema })`.
 
-## Generate services with the CLI
+## Generate more services
 
-The `frozencrow` CLI ships with `@frozencrow/api-core`, so you can scaffold that
-pattern instead of writing it by hand:
+The `frozencrow` CLI ships with `@frozencrow/api-core`:
 
 ```bash
 npx frozencrow generate service invoices --fields "amount:number,paid?:boolean" --wire
 # shortcuts:  npm run generate -- service invoices ...   npm run secret
 ```
 
-See the [@frozencrow/api-core CLI docs](https://www.npmjs.com/package/@frozencrow/api-core#cli)
+`--wire` also registers the service in your app. See the
+[@frozencrow/api-core CLI docs](https://www.npmjs.com/package/@frozencrow/api-core#cli)
 for all commands and options.
 
 ## What you get from the core

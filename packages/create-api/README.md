@@ -11,11 +11,23 @@ npm create @frozencrow/api my-app
 npx @frozencrow/create-api my-app
 ```
 
-This creates `my-app/` from the bundled template, then:
+It asks which services you want to create, then scaffolds them. You can also
+pass them up front (and skip the prompt):
 
-- sets the project's package name,
-- generates a strong `AUTH_SECRET` and writes a ready-to-edit `.env`,
-- points `MONGODB_URI` at a database named after your project.
+```bash
+npm create @frozencrow/api my-app -- --services posts,comments,work-orders
+```
+
+Each name becomes a multitenant service (schema + class + registration, wired
+into `src/services/index.ts`). Leave it blank for no services. For fields and
+other access models, use the `frozencrow` CLI afterwards:
+`npx frozencrow generate service <name> --fields "..."`.
+
+The scaffolder also:
+
+- sets the project's package name and database name,
+- writes a strong secret to `config/local.json` (git-ignored — uses the Feathers
+  config module, no `.env`).
 
 Then:
 
@@ -24,10 +36,6 @@ cd my-app
 npm install
 npm run dev
 ```
-
-The generated project depends on `@frozencrow/api-core` and includes an example
-multitenant `widgets` service (`src/services/widgets/`) showing the pattern for
-adding your own resources.
 
 ## License
 

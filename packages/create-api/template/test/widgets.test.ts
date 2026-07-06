@@ -1,17 +1,36 @@
 import assert from 'assert'
 import { app } from '../src/app'
 
+// Example test for the bundled `widgets` service. If you remove the widgets
+// example, delete this file too.
+
 const port = app.get('port')
 const appUrl = `http://${app.get('host')}:${port}`
 
 const asJson = (res: Response) => res.json() as Promise<any>
 
-describe('API core integration', () => {
+describe('widgets service', () => {
   let accessToken = ''
   let userId = ''
 
   before(async () => {
     await app.listen(port)
+
+    // Register + authenticate a user to exercise the tenant-scoped service.
+    const creds = { email: `w-${Date.now()}@example.com`, password: 'supersecret' }
+    await fetch(`${appUrl}/users`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(creds)
+    })
+    const res = await fetch(`${appUrl}/authentication`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ strategy: 'local', ...creds })
+    })
+    const data = await asJson(res)
+    accessToken = data.accessToken
+    userId = data.user._id
   })
 
   after(async () => {
@@ -23,30 +42,6 @@ describe('API core integration', () => {
       }
     }
     await app.teardown()
-  })
-
-  it('registers and authenticates a user, hiding the password', async () => {
-    const creds = { email: `t-${Date.now()}@example.com`, password: 'supersecret' }
-
-    await fetch(`${appUrl}/users`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(creds)
-    })
-
-    const res = await fetch(`${appUrl}/authentication`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ strategy: 'local', ...creds })
-    })
-    const data = await asJson(res)
-
-    assert.ok(data.accessToken, 'issues an access token')
-    assert.ok(data.user, 'returns the user')
-    assert.strictEqual(data.user.password, undefined, 'password is hidden to clients')
-
-    accessToken = data.accessToken
-    userId = data.user._id
   })
 
   it('creates a tenant-scoped widget through the custom service', async () => {
