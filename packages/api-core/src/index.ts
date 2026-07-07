@@ -15,6 +15,7 @@
 
 // App factory & configuration
 export { createApp, createConfiguredApp, configureCore } from './createApp'
+export type { ConfiguredAppOptions } from './createApp'
 export { resolveConfiguration } from './options'
 export type { CoreOptions, CoreSeedRole } from './options'
 export { configurationSchema, configurationValidator } from './configuration'
@@ -29,7 +30,8 @@ export type { CoreServiceName } from './services/index'
 
 // Infrastructure configure functions (advanced composition)
 export { authentication } from './authentication'
-export { channels } from './channels'
+export { channels, configureChannels, buildPublisher, defaultPublisher } from './channels'
+export type { ChannelsOptions } from './channels'
 export { mongodb } from './mongodb'
 export { seed, DEFAULT_SEED_ROLES } from './seed'
 export { logger } from './logger'

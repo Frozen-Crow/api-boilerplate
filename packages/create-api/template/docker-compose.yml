@@ -11,7 +11,8 @@ services:
       - MONGODB_URI=mongodb://mongodb:27017/my-api
       - MAIL_HOST=smtp4dev
       - MAIL_PORT=25
-      - ORIGINS=http://localhost:5173
+      # ORIGINS is JSON-formatted (see config/custom-environment-variables.json)
+      - ORIGINS=["http://localhost:5173"]
       # Override with a strong value in any non-local environment.
       - AUTH_SECRET=dev-only-secret-change-me-32-chars!!
     depends_on:

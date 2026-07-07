@@ -1,6 +1,6 @@
 {
     "name": "@frozencrow/create-api",
-    "version": "0.1.4",
+    "version": "0.2.0",
     "description": "Scaffold a new API project powered by @frozencrow/api-core",
     "license": "MIT",
     "author": "Eric Uldall",

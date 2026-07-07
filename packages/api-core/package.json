@@ -1,6 +1,6 @@
 {
     "name": "@frozencrow/api-core",
-    "version": "0.1.4",
+    "version": "0.2.0",
     "description": "Batteries-included Feathers 5 + Koa + MongoDB core: auth, RBAC, and multitenant access control",
     "license": "MIT",
     "author": "Eric Uldall",

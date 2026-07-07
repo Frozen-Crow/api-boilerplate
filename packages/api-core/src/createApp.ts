@@ -11,7 +11,7 @@ import { logError } from './hooks/log-error'
 import { mongodb } from './mongodb'
 import { authentication } from './authentication'
 import { coreServices } from './services/index'
-import { channels } from './channels'
+import { configureChannels } from './channels'
 import { seed } from './seed'
 import { setTemplatesDir } from './utils/email-templates'
 
@@ -38,17 +38,21 @@ declare module './declarations' {
  * app.configure(configureCore)
  * ```
  */
-export const configureCore = (app: Application, options?: CoreOptions): Application => {
+export const configureCore = (app: Application, options?: Partial<CoreOptions>): Application => {
   // Programmatic path: map `options` onto the same Feathers config keys the
-  // config module would populate.
+  // config module would populate. Behavior-only options (channels, services,
+  // defaultOrgName, …) may be passed WITHOUT mongodb/authSecret when the
+  // connection config comes from the config module.
   if (options) {
-    const config = resolveConfiguration(options)
-    for (const [key, value] of Object.entries(config)) {
-      if (value !== undefined) {
-        app.set(key as any, value as any)
+    if (options.mongodb !== undefined || options.authSecret !== undefined) {
+      const config = resolveConfiguration(options as CoreOptions)
+      for (const [key, value] of Object.entries(config)) {
+        if (value !== undefined) {
+          app.set(key as any, value as any)
+        }
       }
     }
-    app.set('coreOptions', options)
+    app.set('coreOptions', options as CoreOptions)
   }
 
   // Validate required configuration is present, from whichever source.
@@ -99,7 +103,15 @@ export const configureCore = (app: Application, options?: CoreOptions): Applicat
   app.configure(mongodb)
   app.configure(authentication)
   app.configure(coreServices(options?.services))
-  app.configure(channels)
+
+  // Realtime channels: extend (ChannelsOptions), replace (function), disable
+  // (false), or default tenant-scoped setup.
+  const channelsOption = options?.channels
+  if (channelsOption !== false) {
+    app.configure(
+      typeof channelsOption === 'function' ? channelsOption : configureChannels(channelsOption)
+    )
+  }
 
   // Error logging around every service method.
   app.hooks({
@@ -116,8 +128,12 @@ export const configureCore = (app: Application, options?: CoreOptions): Applicat
     const roles = seedConfig === true ? undefined : (seedConfig as any).roles
     app.hooks({
       setup: [
-        async () => {
+        // Setup hooks are async middleware: (context, next). next() MUST be
+        // called or the setup chain stops here — most visibly, socket.io
+        // (which wraps app.setup) would never attach to the HTTP server.
+        async (_context: any, next: any) => {
           await seed(app, roles)
+          await next()
         }
       ],
       teardown: []
@@ -143,6 +159,14 @@ export const createApp = (options: CoreOptions): Application => {
 }
 
 /**
+ * Options for `createConfiguredApp`: any behavior options from `CoreOptions`
+ * (channels, services, defaultOrgName, seed, templatesDir, …) plus an optional
+ * `validator` for an extended configuration schema. Connection config
+ * (mongodb, secret, origins, …) comes from the config module files.
+ */
+export type ConfiguredAppOptions = Partial<CoreOptions> & { validator?: any }
+
+/**
  * Create an app configured from the Feathers **config module** — i.e. from
  * `config/*.json` (+ `config/local.json` for secrets, + env vars mapped in
  * `config/custom-environment-variables.json`). This is the recommended setup:
@@ -150,15 +174,22 @@ export const createApp = (options: CoreOptions): Application => {
  *
  * ```ts
  * import { createConfiguredApp } from '@frozencrow/api-core'
- * const app = createConfiguredApp()
+ * const app = createConfiguredApp({
+ *   channels: { onLogin: (auth, conn, app) => app.channel(`team/${auth.user.teamId}`).join(conn) }
+ * })
  * app.configure(myServices)
  * await app.listen(app.get('port'))
  * ```
  *
- * Pass a custom validator if you extend the configuration schema.
+ * Pass `validator` if you extend the configuration schema. (For backwards
+ * compatibility, passing a bare validator function is also accepted.)
  */
-export const createConfiguredApp = (validator: any = configurationValidator): Application => {
+export const createConfiguredApp = (options?: ConfiguredAppOptions | ((...args: any[]) => any)): Application => {
+  // Back-compat: createConfiguredApp(validatorFn)
+  const opts: ConfiguredAppOptions = typeof options === 'function' ? { validator: options } : options || {}
+  const { validator, ...behavior } = opts
+
   const app: Application = koa(feathers())
-  app.configure(configuration(validator))
-  return configureCore(app)
+  app.configure(configuration(validator || configurationValidator))
+  return configureCore(app, Object.keys(behavior).length > 0 ? behavior : undefined)
 }

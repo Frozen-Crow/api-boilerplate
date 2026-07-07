@@ -1,4 +1,5 @@
 import type { ApplicationConfiguration } from './configuration'
+import type { ChannelsOptions } from './channels'
 
 /**
  * Public configuration surface for the library.
@@ -69,6 +70,14 @@ export interface CoreOptions {
    * to drop services you don't need (e.g. omit 'invites' and 'verifications').
    */
   services?: Array<'users' | 'organizations' | 'roles' | 'serial-ids' | 'invites' | 'verifications'>
+
+  /**
+   * Realtime channel setup. Defaults to the core's tenant-scoped channels.
+   * - `ChannelsOptions` — extend the defaults (`onConnection`, `onLogin`, `publish`)
+   * - `(app) => void` — replace the channel setup entirely
+   * - `false` — disable; configure your own channels after `createApp`
+   */
+  channels?: false | ((app: any) => void) | ChannelsOptions
 }
 
 const DEFAULT_JWT_OPTIONS = {

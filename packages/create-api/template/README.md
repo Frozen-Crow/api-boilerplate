@@ -22,7 +22,8 @@ Configuration uses the Feathers config module (no `.env` files):
   was scaffolded with a strong `authentication.secret` here.
 - `config/test.json` — used when `NODE_ENV=test`.
 - `config/custom-environment-variables.json` — maps env vars (`AUTH_SECRET`,
-  `MONGODB_URI`, `PORT`, …) onto config for production.
+  `MONGODB_URI`, `PORT`, `ORIGINS`, …) onto config for production. Note
+  `ORIGINS` is JSON-formatted, e.g. `ORIGINS=["https://app.example.com"]`.
 
 Generate a fresh secret any time with `npm run secret -- --write` (updates
 `config/local.json`), or set `AUTH_SECRET` in the environment for production.
@@ -65,5 +66,6 @@ npm test    # needs a MongoDB on localhost:27017
 ## Production
 
 - Set a strong `AUTH_SECRET` (the app refuses to boot in production without one).
-- Set `ORIGINS` to your allowed browser origins.
+- Set `ORIGINS` to your allowed browser origins (JSON array, e.g.
+  `ORIGINS=["https://app.example.com"]`).
 - `npm run compile && npm start`, or build the Docker image.

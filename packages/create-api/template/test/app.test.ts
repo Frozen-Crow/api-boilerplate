@@ -26,4 +26,11 @@ describe('Feathers application tests', () => {
         assert.strictEqual(data.code, 404)
         assert.strictEqual(data.name, 'NotFound')
     })
+
+    it('attaches socket.io even with seeding enabled', async () => {
+        // Regression test: the core's seed setup hook must call next(), or the
+        // setup chain stops and @feathersjs/socketio never attaches to the HTTP
+        // server (this config runs with seed: true).
+        assert.ok((app as any).io, 'app.io should be set after listen()')
+    })
 })

@@ -2,6 +2,10 @@
     "port": "PORT",
     "mongodb": "MONGODB_URI",
     "clientHost": "CLIENT_HOST",
+    "origins": {
+        "__name": "ORIGINS",
+        "__format": "json"
+    },
     "authentication": {
         "secret": "AUTH_SECRET"
     },

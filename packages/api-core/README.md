@@ -142,6 +142,7 @@ above. Only `mongodb` and `authSecret` are required.
 | `templatesDir` | `string` | bundled | directory of `.dot` templates to use instead of the built-ins |
 | `defaultOrgName` | `(user) => string` | `"…'s Organization"` | names the org auto-created for a new user |
 | `services` | `CoreServiceName[]` | all | subset of built-in services to register |
+| `channels` | `ChannelsOptions \| fn \| false` | tenant-scoped | extend, replace, or disable realtime channels (see [Realtime events](#realtime-events)) |
 
 Anything you set is written onto Feathers config, so services read it via
 `app.get('appName')`, `app.get('paginate')`, etc.
@@ -467,7 +468,51 @@ const id = await generateShortId(app, organizationId, 'work-order', 'WO')
 Events are scoped per tenant, not broadcast to everyone. On login a connection
 joins `authenticated`, `userId/<id>`, and `org/<activeOrganization>` channels;
 each service event is published only to the organization it belongs to (falling
-back to the affected user for user events). See `channels`.
+back to the affected user for user events).
+
+### Extending channels
+
+The `channels` option (on `createApp` / `createConfiguredApp` / `configureCore`)
+takes three forms:
+
+**Extend the defaults** — add joins and publishing rules on top of the
+tenant-scoped behavior. A custom `publish` that returns `undefined` falls
+through to the default publisher, so tenant isolation stays intact:
+
+```ts
+const app = createConfiguredApp({
+  channels: {
+    onConnection: (connection, app) => app.channel('lobby').join(connection),
+    onLogin: (authResult, connection, app) => {
+      app.channel(`team/${authResult.user.teamId}`).join(connection)
+    },
+    publish: (data, context) => {
+      // Broadcast announcements to everyone logged in…
+      if (context.path === 'announcements') return context.app.channel('authenticated')
+      // …everything else falls through to the tenant-scoped default.
+    }
+  }
+})
+```
+
+**Replace it** — pass a function to own the whole setup:
+
+```ts
+createConfiguredApp({ channels: (app) => { /* your app.on/app.publish */ } })
+```
+
+**Disable it** — `channels: false`, then configure your own (the building
+blocks `configureChannels`, `defaultPublisher`, and `buildPublisher` are
+exported).
+
+Independently of all of this, Feathers **per-service publishers** override the
+global publisher for that service:
+
+```ts
+app.service('messages').publish('created', (message) =>
+  app.channel(`org/${message.organizationId}`)
+)
+```
 
 ## Security model & production checklist
 
@@ -485,7 +530,8 @@ service blocks external reads; realtime is tenant-scoped.
 ## Exports
 
 App: `createConfiguredApp`, `createApp`, `configureCore`, `resolveConfiguration`,
-`configurationValidator`, `CoreOptions`.
+`configurationValidator`, `CoreOptions`, `ConfiguredAppOptions`. Channels:
+`configureChannels`, `defaultPublisher`, `buildPublisher`, `ChannelsOptions`.
 Services: `coreServices`, `services`, `ALL_CORE_SERVICES`, and namespaced
 `usersService`, `organizationsService`, `rolesService`, `invitesService`,
 `verificationsService`, `serialIdsService` (for schema composition). Hooks &
