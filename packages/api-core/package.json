@@ -53,6 +53,7 @@
     "scripts": {
         "build": "shx rm -rf lib/ && tsc && shx mkdir -p lib/utils/email-templates/templates && shx cp -r src/utils/email-templates/templates/* lib/utils/email-templates/templates/",
         "compile": "npm run build",
+        "test": "npm run build && node --test test/",
         "prepublishOnly": "npm run build"
     },
     "dependencies": {

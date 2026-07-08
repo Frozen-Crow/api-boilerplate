@@ -77,12 +77,21 @@ export const ensureUserHasOrganization = async (app: Application, user: any) => 
             user: user // Pass user in params so setOwnerAndMember hook can set ownerId
         })
 
-        // 3. Update the user with the new organization info
+        // 3. Update the user with the new organization info.
+        //
+        // NOTE: we intentionally do NOT copy the org's Admin role onto
+        // `user.role` here. `user.role` is the *site-level* role slot and is
+        // what `isGlobalAdmin` reads — writing the org role into it would make
+        // every self-signup user a global admin, which bypasses org
+        // membership/permission checks and enables cross-tenant "Login As"
+        // impersonation (see utils/access.ts and services/users/users.class.ts).
+        // The user is already this org's admin via their membership
+        // (`members[].role` above); own-org access flows through that. Grant a
+        // genuine site admin by adding a role to `user.role` explicitly.
         const usersService = app.service('users')
         const updatedUser = await usersService.patch(user._id, {
             activeOrganization: organization._id,
-            organizationId: organization._id,
-            role: [adminRole._id] // Ensure user has the admin role directly on their record for immediate frontend detection
+            organizationId: organization._id
         }, { provider: undefined })
 
         return updatedUser
