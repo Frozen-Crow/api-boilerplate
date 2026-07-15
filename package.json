@@ -18,6 +18,7 @@
         "build": "npm run build --workspaces --if-present",
         "test": "npm run test --workspaces --if-present",
         "bump": "node scripts/bump.mjs",
+        "release": "node scripts/bump.mjs --tag",
         "prettier": "prettier \"packages/**/*.ts\" --write"
     },
     "devDependencies": {

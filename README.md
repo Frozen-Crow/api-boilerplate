@@ -55,38 +55,38 @@ npm test             # runs the example app's integration tests (needs MongoDB)
 docker run -d --name dev-mongo -p 27017:27017 mongo:7
 ```
 
-### Versioning
+### Versioning & releasing
 
-Bump every published package in lockstep (and keep the template's dependency
-range in sync) with one command:
+**`release`** bumps every published package in lockstep, commits the bump, and
+tags it `vX.Y.Z` — so the git tag never drifts from the published version:
 
 ```bash
-npm run bump -- patch          # or minor | major | an explicit x.y.z
-npm run bump -- minor --dry    # preview without writing
+npm run release -- patch       # or minor | major | an explicit x.y.z
+npm run release -- minor --dry # preview without writing/committing/tagging
 ```
 
-Always keep the `--` separator so npm forwards the arguments (e.g. `--dry`) to
-the script instead of consuming them. Or call it directly:
-`node scripts/bump.mjs patch`.
-
-This updates `@frozencrow/api-core` and `@frozencrow/create-api` to the same
-version, rewrites the template's `@frozencrow/api-core` range to `^<new>`
-(needed because for `0.x`, `^0.1.0` does not satisfy `0.2.0`), and refreshes the
-lockfile. Configure which packages participate at the top of
-[`scripts/bump.mjs`](scripts/bump.mjs).
-
-### Publishing
-
-Both packages are public and MIT-licensed. From a clean build:
+Then push and publish:
 
 ```bash
-npm run bump -- patch       # bump versions first
+git push && git push origin vX.Y.Z
 npm run build
 npm publish --workspace @frozencrow/api-core
 npm publish --workspace @frozencrow/create-api
 ```
 
-(`@frozencrow/api-core` runs its build on `prepublishOnly`.)
+`release` bumps both packages to the same version, rewrites the template's
+`@frozencrow/api-core` range to `^<new>` (needed because for `0.x`, `^0.1.0` does
+not satisfy `0.2.0`), refreshes the lockfile, then commits **only those files**
+(leaving unrelated working-tree changes alone) and creates the tag. It aborts if
+the tag already exists.
+
+Use **`npm run bump -- patch`** if you want to change versions *without*
+committing/tagging (e.g. as part of a larger commit). Always keep the `--`
+separator so npm forwards flags like `--dry` to the script. Configure which
+packages participate at the top of [`scripts/bump.mjs`](scripts/bump.mjs).
+
+Both packages are public and MIT-licensed; `@frozencrow/api-core` runs its build
+on `prepublishOnly`.
 
 ## Repository layout
 
