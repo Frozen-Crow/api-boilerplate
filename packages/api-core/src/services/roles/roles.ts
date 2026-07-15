@@ -1,6 +1,10 @@
 import { generateDefaultHooks } from '../../utils/generate-hooks'
+import { resolveServiceSchema } from '../../utils/extend-service'
 
 import {
+    rolesDataSchema,
+    rolesPatchSchema,
+    rolesQueryProperties,
     rolesDataValidator,
     rolesPatchValidator,
     rolesQueryValidator,
@@ -39,7 +43,10 @@ export const roles = (app: Application) => {
     })
     // Initialize hooks
     app.service(rolesPath).hooks(generateDefaultHooks({
-        schema: {
+        schema: resolveServiceSchema(app, rolesPath, {
+            dataSchema: rolesDataSchema,
+            patchSchema: rolesPatchSchema,
+            queryProperties: rolesQueryProperties,
             dataValidator: rolesDataValidator,
             patchValidator: rolesPatchValidator,
             queryValidator: rolesQueryValidator,
@@ -48,7 +55,7 @@ export const roles = (app: Application) => {
             queryResolver: rolesQueryResolver,
             externalResolver: rolesExternalResolver,
             resultResolver: rolesResolver
-        },
+        }),
         accessControl: {
             // Roles are read-only for most users, but maybe editable by admins?
             // For now, let's allow all auth users to read, but creating/updating roles might need restriction.

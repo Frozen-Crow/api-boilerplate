@@ -4,7 +4,7 @@ import { ObjectIdSchema } from '@feathersjs/typebox'
 import type { Static } from '@feathersjs/typebox'
 import { ObjectId } from 'mongodb'
 
-import type { HookContext } from '../../declarations'
+import type { HookContext, SerialIdsExtensions } from '../../declarations'
 import { dataValidator, queryValidator } from '../../validators'
 
 // Main data model schema
@@ -20,7 +20,7 @@ export const serialIdsSchema = Type.Object(
     },
     { $id: 'SerialIds', additionalProperties: false }
 )
-export type SerialIdsData = Static<typeof serialIdsSchema>
+export type SerialIdsData = Static<typeof serialIdsSchema> & SerialIdsExtensions
 export const serialIdsValidator = getValidator(serialIdsSchema, dataValidator)
 export const serialIdsResolver = resolve<SerialIdsData, HookContext>({})
 

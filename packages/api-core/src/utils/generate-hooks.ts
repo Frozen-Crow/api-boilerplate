@@ -16,6 +16,12 @@ interface SchemaObject {
   queryResolver?: any
   externalResolver?: any
   resultResolver?: any
+  // Additional resolvers (from service extensions) layered alongside the core
+  // ones, in the correct slot (before validation for data/patch).
+  extraDataResolvers?: any[]
+  extraPatchResolvers?: any[]
+  extraResultResolvers?: any[]
+  extraQueryResolvers?: any[]
 }
 
 interface AccessControlConfig {
@@ -164,15 +170,22 @@ export const generateHooks = (options: GenerateHooksOptions = {}) => {
     safePush('before', 'update', storeOriginalRequestData)
     safePush('before', 'patch', storeOriginalRequestData)
 
-    // Data resolution for create/update/patch (run before validation)
-    if (schema.dataResolver) {
-      safePush('before', 'create', schemaHooks.resolveData(schema.dataResolver))
+    // Data resolution for create/update/patch (run before validation). Extra
+    // resolvers from a service extension are chained after the core resolver
+    // (resolveData accepts multiple and composes them) so they too run before
+    // the extended validator.
+    const extraData = schema.extraDataResolvers || []
+    const extraPatch = schema.extraPatchResolvers || []
+
+    if (schema.dataResolver || extraData.length > 0) {
+      safePush('before', 'create', schemaHooks.resolveData(...[schema.dataResolver, ...extraData].filter(Boolean)))
     }
 
-    if (schema.patchResolver || schema.dataResolver) {
+    if (schema.patchResolver || schema.dataResolver || extraPatch.length > 0) {
       const pResolver = schema.patchResolver || schema.dataResolver
-      safePush('before', 'update', schemaHooks.resolveData(pResolver))
-      safePush('before', 'patch', schemaHooks.resolveData(pResolver))
+      const patchResolvers = [pResolver, ...extraPatch].filter(Boolean)
+      safePush('before', 'update', schemaHooks.resolveData(...patchResolvers))
+      safePush('before', 'patch', schemaHooks.resolveData(...patchResolvers))
     }
 
     // Data validation for create/update/patch
@@ -189,8 +202,9 @@ export const generateHooks = (options: GenerateHooksOptions = {}) => {
     // Query validation for find
     if (schema.queryValidator) {
       safePush('before', 'find', schemaHooks.validateQuery(schema.queryValidator))
-      if (schema.queryResolver) {
-        safePush('before', 'find', schemaHooks.resolveQuery(schema.queryResolver))
+      const queryResolvers = [schema.queryResolver, ...(schema.extraQueryResolvers || [])].filter(Boolean)
+      if (queryResolvers.length > 0) {
+        safePush('before', 'find', schemaHooks.resolveQuery(...queryResolvers))
       }
     }
 
@@ -199,8 +213,9 @@ export const generateHooks = (options: GenerateHooksOptions = {}) => {
       hooks.around.all.push(schemaHooks.resolveExternal(schema.externalResolver))
     }
 
-    if (schema.resultResolver) {
-      hooks.around.all.push(schemaHooks.resolveResult(schema.resultResolver))
+    const resultResolvers = [schema.resultResolver, ...(schema.extraResultResolvers || [])].filter(Boolean)
+    if (resultResolvers.length > 0) {
+      hooks.around.all.push(schemaHooks.resolveResult(...resultResolvers))
     }
 
     // Virtual props discarding

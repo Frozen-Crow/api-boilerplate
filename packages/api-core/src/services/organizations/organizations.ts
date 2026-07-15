@@ -1,6 +1,10 @@
 import { generateDefaultHooks } from '../../utils/generate-hooks'
+import { resolveServiceSchema, withExtensionHooks } from '../../utils/extend-service'
 
 import {
+    organizationsDataSchema,
+    organizationsPatchSchema,
+    organizationsQueryProperties,
     organizationsDataValidator,
     organizationsPatchValidator,
     organizationsQueryValidator,
@@ -98,7 +102,10 @@ export const organizations = (app: Application) => {
     })
     // Initialize hooks
     app.service(organizationsPath).hooks(generateDefaultHooks({
-        schema: {
+        schema: resolveServiceSchema(app, organizationsPath, {
+            dataSchema: organizationsDataSchema,
+            patchSchema: organizationsPatchSchema,
+            queryProperties: organizationsQueryProperties,
             dataValidator: organizationsDataValidator,
             patchValidator: organizationsPatchValidator,
             queryValidator: organizationsQueryValidator,
@@ -107,13 +114,13 @@ export const organizations = (app: Application) => {
             queryResolver: organizationsQueryResolver,
             externalResolver: organizationsExternalResolver,
             resultResolver: organizationsResolver
-        },
+        }),
         overrides: {
             before: {
                 all: [authenticate('jwt')]
             }
         },
-        extensions: {
+        extensions: withExtensionHooks(app, organizationsPath, {
             before: {
                 create: [setOwnerAndMember],
                 find: [filterOrganizationsByMembership()]
@@ -121,7 +128,7 @@ export const organizations = (app: Application) => {
             after: {
                 create: [setActiveOrganization]
             }
-        }
+        })
     }))
 }
 

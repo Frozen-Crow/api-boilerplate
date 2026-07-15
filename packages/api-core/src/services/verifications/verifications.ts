@@ -1,9 +1,13 @@
 // For more information about this file see https://dove.feathersjs.com/guides/cli/service.html
 import { disallow } from 'feathers-hooks-common'
 import { generateDefaultHooks } from '../../utils/generate-hooks'
+import { resolveServiceSchema, withExtensionHooks } from '../../utils/extend-service'
 import { restrictExternalVerificationCreate } from './verifications.hooks'
 
 import {
+  verificationsDataSchema,
+  verificationsPatchSchema,
+  verificationsQueryProperties,
   verificationsDataValidator,
   verificationsPatchValidator,
   verificationsQueryValidator,
@@ -41,7 +45,10 @@ export const verifications = (app: Application) => {
 
   // Generate hooks using our utility
   const hooks = generateDefaultHooks({
-    schema: {
+    schema: resolveServiceSchema(app, verificationsPath, {
+      dataSchema: verificationsDataSchema,
+      patchSchema: verificationsPatchSchema,
+      queryProperties: verificationsQueryProperties,
       dataValidator: verificationsDataValidator,
       patchValidator: verificationsPatchValidator,
       queryValidator: verificationsQueryValidator,
@@ -50,7 +57,7 @@ export const verifications = (app: Application) => {
       queryResolver: verificationsQueryResolver,
       externalResolver: verificationsExternalResolver,
       resultResolver: verificationsResolver
-    },
+    }),
     // Verifications service should allow anonymous access for password reset and magic links
     requireAuth: false,
     allowAnonymous: true,
@@ -58,7 +65,7 @@ export const verifications = (app: Application) => {
       methods: [], // No access control needed for verifications
       mode: 'ignore'
     },
-    extensions: {
+    extensions: withExtensionHooks(app, verificationsPath, {
       before: {
         // Verification records hold secret tokens (password-reset / magic-link /
         // invite). They are looked up server-side via the verifyToken util, so
@@ -76,7 +83,7 @@ export const verifications = (app: Application) => {
       after: {
         create: [sendVerificationEmail]
       }
-    }
+    })
   })
 
   // Initialize hooks

@@ -4,7 +4,7 @@ import { Type, getValidator, querySyntax } from '@feathersjs/typebox'
 import { ObjectIdSchema } from '@feathersjs/typebox'
 import type { Static } from '@feathersjs/typebox'
 
-import type { HookContext } from '../../declarations'
+import type { HookContext, InvitesExtensions } from '../../declarations'
 import { dataValidator, queryValidator } from '../../validators'
 import type { InvitesService } from './invites.class'
 
@@ -59,7 +59,7 @@ export const invitesSchema = Type.Object(
   },
   { $id: 'Invites', additionalProperties: false }
 )
-export type Invites = Static<typeof invitesSchema>
+export type Invites = Static<typeof invitesSchema> & InvitesExtensions
 export const invitesValidator = getValidator(invitesSchema, dataValidator)
 export const invitesResolver = resolve<Invites, HookContext<InvitesService>>({
   roleNames: virtual(async (invite, context) => {

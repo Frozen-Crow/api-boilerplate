@@ -4,7 +4,7 @@ import { Type, getValidator, querySyntax } from '@feathersjs/typebox'
 import { ObjectIdSchema } from '@feathersjs/typebox'
 import type { Static } from '@feathersjs/typebox'
 
-import type { HookContext } from '../../declarations'
+import type { HookContext, VerificationsExtensions } from '../../declarations'
 import { dataValidator, queryValidator } from '../../validators'
 import type { VerificationsService } from './verifications.class'
 
@@ -32,7 +32,7 @@ export const verificationsSchema = Type.Object(
   },
   { $id: 'Verifications', additionalProperties: false }
 )
-export type Verifications = Static<typeof verificationsSchema>
+export type Verifications = Static<typeof verificationsSchema> & VerificationsExtensions
 export const verificationsValidator = getValidator(verificationsSchema, dataValidator)
 export const verificationsResolver = resolve<Verifications, HookContext<VerificationsService>>({})
 

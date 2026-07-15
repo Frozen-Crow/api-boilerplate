@@ -1,8 +1,12 @@
 // For more information about this file see https://dove.feathersjs.com/guides/cli/service.html
 import { generateDefaultHooks } from '../../utils/generate-hooks'
+import { resolveServiceSchema, withExtensionHooks } from '../../utils/extend-service'
 import { teamAccessControl } from '../../utils/team-access-control'
 
 import {
+  invitesDataSchema,
+  invitesPatchSchema,
+  invitesQueryProperties,
   invitesDataValidator,
   invitesPatchValidator,
   invitesQueryValidator,
@@ -33,7 +37,10 @@ export const invites = (app: Application) => {
 
   // Generate hooks using our utility
   const hooks = generateDefaultHooks({
-    schema: {
+    schema: resolveServiceSchema(app, invitesPath, {
+      dataSchema: invitesDataSchema,
+      patchSchema: invitesPatchSchema,
+      queryProperties: invitesQueryProperties,
       dataValidator: invitesDataValidator,
       patchValidator: invitesPatchValidator,
       queryValidator: invitesQueryValidator,
@@ -42,14 +49,14 @@ export const invites = (app: Application) => {
       queryResolver: invitesQueryResolver,
       externalResolver: invitesExternalResolver,
       resultResolver: invitesResolver
-    },
+    }),
     // Require authentication for all operations
     requireAuth: true,
     accessControl: {
       methods: ['get', 'find', 'create', 'remove'],
       mode: teamAccessControl
     },
-    extensions: {
+    extensions: withExtensionHooks(app, invitesPath, {
       before: {
         patch: [guardInvitePatch]
       },
@@ -57,7 +64,7 @@ export const invites = (app: Application) => {
         create: [createVerificationForInvite],
         patch: [handleInviteAcceptance]
       }
-    }
+    })
   })
 
   // Initialize hooks

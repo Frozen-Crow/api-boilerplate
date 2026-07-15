@@ -40,6 +40,10 @@ export { dataValidator, queryValidator } from './validators'
 // Hook generation system — the primary extension point for custom services
 export { generateHooks, generateDefaultHooks } from './utils/generate-hooks'
 
+// Extending built-in services (schema fields, resolvers, hooks)
+export { resolveServiceSchema, withExtensionHooks } from './utils/extend-service'
+export type { ServiceExtension, CoreExtend, ServiceSchemaBase } from './utils/extend-service'
+
 // Access control
 export { isGlobalAdmin, assertOrgMembership, assertOrgPermission } from './utils/access'
 export { teamAccessControl } from './utils/team-access-control'

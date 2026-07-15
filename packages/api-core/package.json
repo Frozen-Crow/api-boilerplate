@@ -43,6 +43,10 @@
             "types": "./lib/declarations.d.ts",
             "default": "./lib/declarations.js"
         },
+        "./lib/declarations": {
+            "types": "./lib/declarations.d.ts",
+            "default": "./lib/declarations.js"
+        },
         "./package.json": "./package.json"
     },
     "files": [
@@ -53,7 +57,7 @@
     "scripts": {
         "build": "shx rm -rf lib/ && tsc && shx mkdir -p lib/utils/email-templates/templates && shx cp -r src/utils/email-templates/templates/* lib/utils/email-templates/templates/",
         "compile": "npm run build",
-        "test": "npm run build && node --test test/",
+        "test": "cross-env NODE_ENV=test mocha test/ --require ts-node/register --recursive --extension .ts --exit",
         "prepublishOnly": "npm run build"
     },
     "dependencies": {
@@ -82,10 +86,13 @@
     },
     "devDependencies": {
         "@types/dot": "^1.1.7",
+        "@types/mocha": "^10.0.10",
         "@types/node": "^24.10.4",
         "@types/node-cache": "^4.1.3",
         "@types/nodemailer": "^7.0.5",
         "@types/qs": "^6.9.16",
+        "cross-env": "^10.1.0",
+        "mocha": "^11.7.5",
         "shx": "^0.4.0",
         "ts-node": "^10.9.2",
         "typescript": "^5.9.3"

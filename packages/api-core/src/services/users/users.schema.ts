@@ -5,7 +5,7 @@ import { ObjectIdSchema } from '@feathersjs/typebox'
 import type { Static } from '@feathersjs/typebox'
 import { passwordHash } from '@feathersjs/authentication-local'
 
-import type { HookContext } from '../../declarations'
+import type { HookContext, UserExtensions } from '../../declarations'
 import { dataValidator, queryValidator } from '../../validators'
 import type { UserService } from './users.class'
 
@@ -31,7 +31,7 @@ export const userSchema = Type.Object(
   },
   { $id: 'User', additionalProperties: false }
 )
-export type User = Static<typeof userSchema>
+export type User = Static<typeof userSchema> & UserExtensions
 export const userValidator = getValidator(userSchema, dataValidator)
 export const userResolver = resolve<User, HookContext<UserService>>({})
 

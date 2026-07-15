@@ -3,7 +3,7 @@ import { Type, getValidator, querySyntax } from '@feathersjs/typebox'
 import { ObjectIdSchema } from '@feathersjs/typebox'
 import type { Static } from '@feathersjs/typebox'
 
-import type { HookContext } from '../../declarations'
+import type { HookContext, OrganizationsExtensions } from '../../declarations'
 import { dataValidator, queryValidator } from '../../validators'
 import type { Organizations } from './organizations.class'
 
@@ -33,7 +33,7 @@ export const organizationsSchema = Type.Object(
     },
     { $id: 'Organizations', additionalProperties: false }
 )
-export type OrganizationsData = Static<typeof organizationsSchema>
+export type OrganizationsData = Static<typeof organizationsSchema> & OrganizationsExtensions
 export const organizationsValidator = getValidator(organizationsSchema, dataValidator)
 export const organizationsResolver = resolve<OrganizationsData, HookContext<Organizations>>({})
 

@@ -1,11 +1,12 @@
-import { authenticate } from '@feathersjs/authentication'
 import { generateDefaultHooks } from '../../utils/generate-hooks'
+import { resolveServiceSchema, withExtensionHooks } from '../../utils/extend-service'
 import { populateUserRoles } from '../../hooks/populate-user-roles'
 import { preventRoleChange } from '../../hooks/prevent-role-change'
 
-import { hooks as schemaHooks } from '@feathersjs/schema'
-
 import {
+  userDataSchema,
+  userPatchSchema,
+  userQueryProperties,
   userDataValidator,
   userPatchValidator,
   userQueryValidator,
@@ -32,9 +33,12 @@ export const user = (app: Application) => {
     // You can add additional custom events to be sent to clients here
     events: []
   })
-  // Initialize hooks
+  // Initialize hooks (schema + hooks honor any `extend.users` option)
   app.service(userPath).hooks(generateDefaultHooks({
-    schema: {
+    schema: resolveServiceSchema(app, userPath, {
+      dataSchema: userDataSchema,
+      patchSchema: userPatchSchema,
+      queryProperties: userQueryProperties,
       dataValidator: userDataValidator,
       patchValidator: userPatchValidator,
       queryValidator: userQueryValidator,
@@ -43,14 +47,14 @@ export const user = (app: Application) => {
       queryResolver: userQueryResolver,
       externalResolver: userExternalResolver,
       resultResolver: userResolver
-    },
+    }),
     accessControl: {
       methods: ['find', 'get', 'update', 'patch', 'remove'],
       mode: 'restrictToUser',
       restrictToUserAs: '_id'
     },
     allowAnonymous: true,
-    extensions: {
+    extensions: withExtensionHooks(app, userPath, {
       before: {
         // Prevent self privilege-escalation: strip role / verification / identity
         // fields from external non-admin writes (see prevent-role-change.ts).
@@ -58,7 +62,7 @@ export const user = (app: Application) => {
         update: [preventRoleChange()],
         patch: [preventRoleChange()]
       }
-    }
+    })
   }))
 
   app.service(userPath).hooks({

@@ -18,6 +18,7 @@ per-organization data isolation, so you can focus on your own resources.
 - [Authentication](#authentication)
 - [Authorization: RBAC & multitenancy](#authorization-rbac--multitenancy)
 - [Adding your own services](#adding-your-own-services)
+- [Extending built-in services](#extending-built-in-services)
 - [CLI](#cli)
 - [`generateDefaultHooks` reference](#generatedefaulthooks--generatehooks-reference)
 - [Organization membership management](#organization-membership-management)
@@ -143,6 +144,7 @@ above. Only `mongodb` and `authSecret` are required.
 | `defaultOrgName` | `(user) => string` | `"…'s Organization"` | names the org auto-created for a new user |
 | `services` | `CoreServiceName[]` | all | subset of built-in services to register |
 | `channels` | `ChannelsOptions \| fn \| false` | tenant-scoped | extend, replace, or disable realtime channels (see [Realtime events](#realtime-events)) |
+| `extend` | `Record<string, ServiceExtension>` | — | add fields/resolvers/hooks to built-in services (see [Extending built-in services](#extending-built-in-services)) |
 
 Anything you set is written onto Feathers config, so services read it via
 `app.get('appName')`, `app.get('paginate')`, etc.
@@ -325,6 +327,68 @@ export const widgets = (app: Application) => {
 Then `app.configure(widgets)` after `createApp`. The service is now
 JWT-protected, tenant-scoped, validated, and requires `widgets:<method>`
 permission — no extra code.
+
+## Extending built-in services
+
+Need to add a field to `users` (or another core service)? The core schemas are
+strict (`additionalProperties: false`), so extra fields would be rejected. The
+`extend` option adds them properly — rebuilding the service's validators to
+accept the new fields while still rejecting truly-unknown ones.
+
+```ts
+import { Type } from '@feathersjs/typebox'
+
+createConfiguredApp({
+  extend: {
+    users: {
+      // Stored + returned + (below) queryable. Client-writable — guard
+      // server-only fields with a hook if needed.
+      properties: {
+        phone: Type.Optional(Type.String()),
+        stripeCustomerId: Type.Optional(Type.String())
+      },
+      // Make a field filterable in queries.
+      queryProperties: { phone: Type.String() },
+      // Optional resolvers, run in the correct slot alongside the core ones.
+      resolvers: {
+        data: { source: async (v) => v ?? 'signup' },        // server-set on create
+        result: { displayName: async (_v, u) => `${u.firstName} ${u.lastName}` } // computed on read
+      },
+      // Optional extra Feathers hooks (merged onto the service's hooks).
+      hooks: { after: { create: [syncToCrm] } }
+    }
+  }
+})
+```
+
+Keys are service paths: `users`, `organizations`, `roles`, `invites`,
+`verifications`.
+
+### Typing the added fields
+
+The runtime `extend` and the compile-time types are separate channels (module
+augmentation is static), so declare the fields once via the augmentable
+extension interface. Augment from `@frozencrow/api-core/lib/declarations` — the
+same entry the generated services use, and it resolves under every
+`moduleResolution` mode:
+
+```ts
+declare module '@frozencrow/api-core/lib/declarations' {
+  interface UserExtensions {
+    phone?: string
+    stripeCustomerId?: string
+  }
+}
+```
+
+Now the fields are typed on the `User` entity **and** on `context.params.user`
+everywhere. There is a matching interface per service: `UserExtensions`,
+`OrganizationsExtensions`, `RolesExtensions`, `InvitesExtensions`,
+`VerificationsExtensions`.
+
+> Plain stored fields don't need a resolver — Feathers returns them as-is.
+> `additionalProperties: false` still holds, so anything not declared in
+> `properties` is rejected on write.
 
 ## CLI
 
@@ -534,7 +598,9 @@ App: `createConfiguredApp`, `createApp`, `configureCore`, `resolveConfiguration`
 `configureChannels`, `defaultPublisher`, `buildPublisher`, `ChannelsOptions`.
 Services: `coreServices`, `services`, `ALL_CORE_SERVICES`, and namespaced
 `usersService`, `organizationsService`, `rolesService`, `invitesService`,
-`verificationsService`, `serialIdsService` (for schema composition). Hooks &
+`verificationsService`, `serialIdsService` (for schema composition). Extending
+services: `resolveServiceSchema`, `withExtensionHooks`, `ServiceExtension`,
+`CoreExtend`. Hooks &
 access: `generateHooks`, `generateDefaultHooks`, `teamAccessControl`,
 `isGlobalAdmin`, `assertOrgMembership`, `assertOrgPermission`, `populateUserRoles`,
 `preventRoleChange`, `filterOrganizationsByMembership`, `filterUsersByOrganization`,

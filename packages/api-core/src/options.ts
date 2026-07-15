@@ -1,5 +1,6 @@
 import type { ApplicationConfiguration } from './configuration'
 import type { ChannelsOptions } from './channels'
+import type { CoreExtend } from './utils/extend-service'
 
 /**
  * Public configuration surface for the library.
@@ -78,6 +79,12 @@ export interface CoreOptions {
    * - `false` — disable; configure your own channels after `createApp`
    */
   channels?: false | ((app: any) => void) | ChannelsOptions
+
+  /**
+   * Extend built-in services with extra schema fields, resolvers, and hooks —
+   * keyed by service path (e.g. `users`, `organizations`). See `ServiceExtension`.
+   */
+  extend?: CoreExtend
 }
 
 const DEFAULT_JWT_OPTIONS = {

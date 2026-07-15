@@ -27,3 +27,28 @@ declare module '@feathersjs/feathers' {
     user?: User
   }
 }
+
+/**
+ * Augmentation points for the fields consumers add to core services via the
+ * `extend` option. Each core entity type is intersected with its extensions
+ * interface, so adding fields here makes them typed on the entity AND on
+ * `params.user` (for users). A consumer augments the interface from the
+ * package's `declarations` entry — which is in the package `exports` map, so it
+ * resolves under every moduleResolution mode:
+ *
+ * ```ts
+ * declare module '@frozencrow/api-core/declarations' {
+ *   interface UserExtensions { phone?: string; stripeCustomerId?: string }
+ * }
+ * ```
+ *
+ * (These are type-only; the runtime fields still come from the `extend` option.)
+ */
+/* eslint-disable @typescript-eslint/no-empty-interface */
+export interface UserExtensions {}
+export interface OrganizationsExtensions {}
+export interface RolesExtensions {}
+export interface SerialIdsExtensions {}
+export interface InvitesExtensions {}
+export interface VerificationsExtensions {}
+/* eslint-enable @typescript-eslint/no-empty-interface */
