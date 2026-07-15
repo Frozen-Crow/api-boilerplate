@@ -19,7 +19,7 @@
         "config": "3.3.9"
     },
     "dependencies": {
-        "@frozencrow/api-core": "^0.2.1",
+        "@frozencrow/api-core": "^0.3.0",
         "@feathersjs/configuration": "^5.0.37",
         "@feathersjs/feathers": "^5.0.37",
         "@feathersjs/mongodb": "^5.0.37",
