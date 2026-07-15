@@ -2,6 +2,7 @@ import { generateDefaultHooks } from '../../utils/generate-hooks'
 import { resolveServiceSchema, withExtensionHooks } from '../../utils/extend-service'
 import { populateUserRoles } from '../../hooks/populate-user-roles'
 import { preventRoleChange } from '../../hooks/prevent-role-change'
+import { restrictUserToSelf } from '../../hooks/restrict-user-to-self'
 
 import {
   userDataSchema,
@@ -56,11 +57,16 @@ export const user = (app: Application) => {
     allowAnonymous: true,
     extensions: withExtensionHooks(app, userPath, {
       before: {
-        // Prevent self privilege-escalation: strip role / verification / identity
-        // fields from external non-admin writes (see prevent-role-change.ts).
+        // - restrictUserToSelf: scope by-id reads/writes to the caller's own
+        //   record — without it, any authenticated user could read/modify/delete
+        //   another user by id (see restrict-user-to-self.ts).
+        // - preventRoleChange: strip role / verification / identity fields from
+        //   external non-admin writes (see prevent-role-change.ts).
+        get: [restrictUserToSelf()],
+        remove: [restrictUserToSelf()],
         create: [preventRoleChange()],
-        update: [preventRoleChange()],
-        patch: [preventRoleChange()]
+        update: [restrictUserToSelf(), preventRoleChange()],
+        patch: [restrictUserToSelf(), preventRoleChange()]
       }
     })
   }))
