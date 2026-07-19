@@ -1,10 +1,23 @@
+import { ObjectId } from 'mongodb'
 import type { HookContext } from '../declarations'
+import { logger } from '../logger'
 
+/**
+ * Expand a user's `role` array (ObjectIds) into full role objects for
+ * downstream role checks (isGlobalAdmin, preventRoleChange, app code reading
+ * `params.user.role`).
+ *
+ * Two correctness rules, both learned the hard way:
+ *  1. Query with real ObjectIds. The query validator does NOT coerce strings to
+ *     ObjectIds inside `$in`, so `_id: { $in: ['<hex>'] }` matches nothing.
+ *  2. Fail open to the raw ids. On a lookup miss or error, leave `user.role`
+ *     UNCHANGED — never replace it with `[]`, which would silently strip roles
+ *     from a user who genuinely holds them and break every role check.
+ */
 export const populateUserRoles = () => {
     return async (context: HookContext) => {
-        const { app, method, result, params } = context
+        const { app, method, result } = context
 
-        // Skip if no result or if internal call already has roles
         if (!result) return context
 
         const rolesService = app.service('roles')
@@ -14,24 +27,39 @@ export const populateUserRoles = () => {
                 return user
             }
 
-            // If already populated (objects with name), skip
-            if (typeof user.role[0] === 'object' && user.role[0].name) {
+            // Already populated (objects with a name) — skip.
+            if (typeof user.role[0] === 'object' && user.role[0] !== null && user.role[0].name) {
                 return user
             }
 
-            const roleIds = user.role.map((r: any) => r.toString())
+            // Convert to real ObjectIds (see rule 1). Skip anything unparseable.
+            const roleIds = user.role
+                .map((r: any) => {
+                    if (r instanceof ObjectId) return r
+                    const s = String(r)
+                    return ObjectId.isValid(s) ? new ObjectId(s) : null
+                })
+                .filter((r: ObjectId | null): r is ObjectId => r !== null)
+
+            if (roleIds.length === 0) {
+                // Nothing valid to look up — leave the raw ids untouched.
+                return user
+            }
 
             try {
-                const roles = await rolesService.find({
-                    query: {
-                        _id: { $in: roleIds }
-                    },
+                const found = await rolesService.find({
+                    query: { _id: { $in: roleIds } },
                     paginate: false
                 })
+                const roles = Array.isArray(found) ? found : (found?.data ?? [])
 
-                user.role = Array.isArray(roles) ? roles : (roles.data || [])
+                // Only replace when we actually resolved roles (see rule 2).
+                if (roles.length > 0) {
+                    user.role = roles
+                }
             } catch (error) {
-                console.error('Error populating user roles:', error)
+                logger.error('Error populating user roles: %O', error)
+                // Leave user.role unchanged on error.
             }
 
             return user

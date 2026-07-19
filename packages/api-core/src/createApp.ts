@@ -91,7 +91,9 @@ export const configureCore = (app: Application, options?: Partial<CoreOptions>):
     app.use(serveStatic(publicDir))
   }
   app.use(errorHandler())
-  app.use(bodyParser())
+  // Body parser options (e.g. { jsonLimit: '8mb' }) from the option or config.
+  const bodyParserOptions = options?.bodyParser ?? (app.get('bodyParser' as any) as any)
+  app.use(bodyParser(bodyParserOptions))
   app.use(parseAuthentication())
 
   app.configure(rest())

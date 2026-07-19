@@ -85,6 +85,17 @@ export interface CoreOptions {
    * keyed by service path (e.g. `users`, `organizations`). See `ServiceExtension`.
    */
   extend?: CoreExtend
+
+  /**
+   * Options passed to the Koa body parser. Use `jsonLimit` to allow larger
+   * request bodies (default is 1MB), e.g. `{ jsonLimit: '8mb' }`.
+   */
+  bodyParser?: {
+    jsonLimit?: string | number
+    formLimit?: string | number
+    textLimit?: string | number
+    [key: string]: any
+  }
 }
 
 const DEFAULT_JWT_OPTIONS = {

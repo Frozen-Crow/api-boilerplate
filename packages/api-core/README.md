@@ -145,6 +145,7 @@ above. Only `mongodb` and `authSecret` are required.
 | `services` | `CoreServiceName[]` | all | subset of built-in services to register |
 | `channels` | `ChannelsOptions \| fn \| false` | tenant-scoped | extend, replace, or disable realtime channels (see [Realtime events](#realtime-events)) |
 | `extend` | `Record<string, ServiceExtension>` | — | add fields/resolvers/hooks to built-in services (see [Extending built-in services](#extending-built-in-services)) |
+| `bodyParser` | `{ jsonLimit?, formLimit?, … }` | 1MB | Koa body-parser options; raise `jsonLimit` for large request bodies |
 
 Anything you set is written onto Feathers config, so services read it via
 `app.get('appName')`, `app.get('paginate')`, etc.
