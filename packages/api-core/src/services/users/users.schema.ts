@@ -40,10 +40,35 @@ export const userExternalResolver = resolve<User, HookContext<UserService>>({
   password: async () => undefined
 })
 
-// Schema for creating new entries
-export const userDataSchema = Type.Pick(userSchema, ['email', 'password', 'firstName', 'lastName'], {
-  $id: 'UserData'
-})
+// Schema for creating new entries.
+//
+// NOTE: `Type.Pick` inherits `additionalProperties: false` from `userSchema`,
+// so the create validator rejects any field not listed here. The Google OAuth
+// strategy writes its identity fields (googleId, googleEmail, …) when creating a
+// user on first sign-in, so those fields MUST be part of this schema — otherwise
+// Google sign-up 400s with `additionalProperty "googleId"` (both for plain apps
+// and, more visibly, for consumers that `extend` the users service, whose data
+// validator is rebuilt from these properties). External clients still can't set
+// the privileged ones: the `preventRoleChange` hook strips googleId / googleEmail
+// / emailVerified / oauthVerified / hostedDomain from non-admin external writes.
+export const userDataSchema = Type.Pick(
+  userSchema,
+  [
+    'email',
+    'password',
+    'firstName',
+    'lastName',
+    'googleId',
+    'googleEmail',
+    'emailVerified',
+    'profilePicture',
+    'hostedDomain',
+    'oauthVerified'
+  ],
+  {
+    $id: 'UserData'
+  }
+)
 export type UserData = Static<typeof userDataSchema>
 export const userDataValidator = getValidator(userDataSchema, dataValidator)
 export const userDataResolver = resolve<UserData, HookContext<UserService>>({
@@ -74,8 +99,12 @@ export const userPatchResolver = resolve<UserPatch, HookContext<UserService>>({
   password: passwordHash({ strategy: 'local' })
 })
 
-// Schema for allowed query properties
-export const userQueryProperties = Type.Pick(userSchema, ['_id', 'email', 'firstName', 'lastName'])
+// Schema for allowed query properties. `googleId` is included so the Google
+// OAuth strategy can look an account up by its Google identity (`findEntity`
+// queries `{ googleId }`); without it that internal lookup fails query
+// validation. External reads stay scoped to the caller's own record via the
+// `restrictToUser` access-control mode + `userQueryResolver` below.
+export const userQueryProperties = Type.Pick(userSchema, ['_id', 'email', 'firstName', 'lastName', 'googleId'])
 export const userQuerySchema = Type.Intersect(
   [
     querySyntax(userQueryProperties),
