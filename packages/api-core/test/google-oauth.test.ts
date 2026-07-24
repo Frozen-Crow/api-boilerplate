@@ -211,6 +211,35 @@ describe('Google OAuth strategy (issue #1)', () => {
     )
     assert.ok(url.includes('code=google-account-exists'), 'redirect URL carries the typed code')
   })
+
+  // Regression for the One Tap 400: the base OAuthStrategy stamps `${this.name}Id`,
+  // which for this strategy is `google-one-tapId` — a stray key the strict users
+  // validator rejects. Only the canonical `googleId` should be written. Uses the
+  // real create/validate path with the credential verification stubbed out.
+  it('signs in via the One Tap strategy without a stray google-one-tapId key', async () => {
+    const email = uniq('onetap')
+    const sub = `sub-${Date.now()}-${counter++}`
+    const oneTap: any = (app.service('authentication') as any).strategies['google-one-tap']
+    const original = oneTap.verifyCredential
+    oneTap.verifyCredential = async () => ({
+      sub,
+      given_name: 'One',
+      family_name: 'Tap',
+      email,
+      email_verified: true
+    })
+    try {
+      const res: any = await app.service('authentication').create(
+        { strategy: 'google-one-tap', credential: 'stub-id-token' } as any,
+        { provider: 'rest' } as any
+      )
+      assert.ok(res.accessToken, 'One Tap sign-in issues a token (no 400)')
+      assert.strictEqual(res.user.googleId, sub, 'canonical googleId stored')
+      assert.strictEqual(res.user['google-one-tapId'], undefined, 'no stray provider-named id key')
+    } finally {
+      oneTap.verifyCredential = original
+    }
+  })
 })
 
 // The exact shape from the report: a consumer that extends `users` (rebuilding

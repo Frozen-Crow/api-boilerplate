@@ -10,6 +10,14 @@ import { GoogleProfile, buildGoogleProfile, buildGoogleEntityData, extractBearer
 export class GoogleStrategy extends OAuthStrategy {
   async getEntityData(profile: GoogleProfile, existing: any, params: any) {
     const baseData = await super.getEntityData(profile, existing, { ...params, provider: null })
+    // The base OAuthStrategy stamps an id keyed by the strategy *name*
+    // (`${this.name}Id`). For the One Tap strategy that is `google-one-tapId`,
+    // a stray key the strict users validator rejects (400 additionalProperty).
+    // buildGoogleEntityData writes the canonical `googleId` itself, so drop the
+    // base's provider-named key.
+    if (this.name) {
+      delete (baseData as any)[`${this.name}Id`]
+    }
     return buildGoogleEntityData(profile, baseData, existing)
   }
 
@@ -240,20 +248,29 @@ export class GoogleStrategy extends OAuthStrategy {
 }
 
 export class GoogleOneTapStrategy extends GoogleStrategy {
-  async authenticate(authentication: any, params: any) {
-    const { entity } = this.configuration
+  /**
+   * Cryptographically verify a One Tap `credential` (a Google ID token) against
+   * this app's client id and return the resulting profile. Isolated so it can be
+   * overridden in tests without hitting Google.
+   */
+  protected async verifyCredential(credential: string): Promise<GoogleProfile> {
     const oauthConfig = (this.authentication?.configuration as any)?.oauth || {}
     const googleConfig = oauthConfig?.google || {}
     const client = new OAuth2Client(googleConfig.key || '')
     const ticket = await client.verifyIdToken({
-      idToken: authentication.credential,
-      audience: googleConfig.key || '',
+      idToken: credential,
+      audience: googleConfig.key || ''
     })
     const payload = ticket.getPayload()
     if (!payload) {
       throw new NotAuthenticated('Invalid Google token')
     }
-    const profile = buildGoogleProfile(payload)
+    return buildGoogleProfile(payload)
+  }
+
+  async authenticate(authentication: any, params: any) {
+    const { entity } = this.configuration
+    const profile = await this.verifyCredential(authentication.credential)
     const authEntity = await this.resolveGoogleEntity(profile, params)
     return {
       authentication: { strategy: this.name || 'google-one-tap' },
