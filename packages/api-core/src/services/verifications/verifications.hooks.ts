@@ -3,7 +3,7 @@
  */
 
 import { randomBytes } from 'crypto'
-import { BadRequest } from '@feathersjs/errors'
+import { BadRequest, MethodNotAllowed } from '@feathersjs/errors'
 import type { HookContext } from '../../declarations'
 import { logger } from '../../logger'
 import { sendTemplatedEmail } from '../../utils/email-templates'
@@ -35,10 +35,14 @@ export const restrictExternalVerificationCreate = async (context: HookContext) =
   }
 
   // Never let external callers control server-managed / trust-sensitive fields.
+  // `userId` is especially important: a magic-link/verification consumer may log
+  // a user in based on it, so an external caller must never be able to bind a
+  // verification (whose token is emailed to `email`) to an arbitrary account.
   delete context.data.metadata
   delete context.data.token
   delete context.data.used
   delete context.data.usedAt
+  delete context.data.userId
 
   return context
 }
@@ -233,7 +237,16 @@ export const handlePasswordReset = async (context: HookContext, next?: () => Pro
 
   // Check if this is a password reset operation (has password, token, and no ID)
   if (!data?.password || !data?.token || id !== null) {
-    // Not a password reset, proceed with normal patch
+    // Not a password reset. The ONLY patch shape allowed from outside is the
+    // password-reset flow handled below; every other external patch must be
+    // rejected. Otherwise an external caller could mutate verification records
+    // directly — e.g. `patch(null, { email: 'victim@…' }, { query: { token } })`
+    // to graft a token they legitimately own onto a victim's email and then
+    // reset the victim's password (account takeover), or flip `used`/`expiresAt`
+    // to replay a token. Internal calls (provider undefined) stay trusted.
+    if (params.provider) {
+      throw new MethodNotAllowed('Verifications cannot be patched directly')
+    }
     if (next) {
       return next()
     }
