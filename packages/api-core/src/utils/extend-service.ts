@@ -1,6 +1,7 @@
 import { Type, getValidator, querySyntax } from '@feathersjs/typebox'
 import { resolve } from '@feathersjs/schema'
 import { dataValidator, queryValidator } from '../validators'
+import { isGlobalAdmin } from './access'
 import type { Application } from '../declarations'
 
 /**
@@ -23,10 +24,32 @@ import type { Application } from '../declarations'
 export interface ServiceExtension {
   /**
    * Extra TypeBox properties merged into the service's create + patch schemas
-   * (so clients may send them and they are stored/returned). Mark server-only
-   * fields with a guarding hook.
+   * (so they are stored/returned).
+   *
+   * SECURITY: these are **server-owned by default** — an external client (the
+   * account owner included) cannot set them on create/patch/update unless the
+   * property is also listed in `clientWritable`. This prevents app state hung off
+   * a core service (entitlements, quotas, consent, …) from being self-writable.
+   * Internal (server-side) calls and global admins are unaffected.
    */
   properties?: Record<string, any>
+  /**
+   * Names of `properties` that external clients ARE allowed to write (e.g. a
+   * user-editable `phone`). Anything not listed here is server-owned and stripped
+   * from external, non-admin writes. Omit for the safe default (all server-owned).
+   *
+   * Notes:
+   * - The guard covers `create`/`patch`/`update`. Core services expose `patch`
+   *   (partial), not `update` (full replace). If you re-register a service with
+   *   `update` in its methods, prefer `patch` for editing server-owned-bearing
+   *   records — a full replace would drop stripped fields rather than preserve
+   *   them.
+   * - It guards writes only, not `queryProperties` (filterability).
+   * - A custom data/patch resolver must use its `value` argument (already
+   *   stripped); reaching into the raw `context.data.<field>` would re-introduce
+   *   the client value.
+   */
+  clientWritable?: string[]
   /** Extra properties merged into the query schema so the field is filterable. */
   queryProperties?: Record<string, any>
   /** Extra resolvers, applied in the correct slot alongside the core resolvers. */
@@ -116,8 +139,42 @@ export const resolveServiceSchema = (app: Application, serviceName: string, base
     )
   }
 
-  if (ext.resolvers?.data) schema.extraDataResolvers = [resolve(ext.resolvers.data as any)]
-  if (ext.resolvers?.patch) schema.extraPatchResolvers = [resolve(ext.resolvers.patch as any)]
+  // Opt-in writability (issue #2). Extended properties are server-owned by
+  // default: any that the consumer has NOT listed in `clientWritable` are
+  // stripped from EXTERNAL, non-admin create/patch/update data BEFORE validation,
+  // so an account owner can't self-write app state attached via `extend`.
+  // Runs before any consumer data/patch resolver, so server-side resolvers can
+  // still compute those fields.
+  const serverOwnedKeys = Object.keys(ext.properties || {}).filter(
+    (key) => !(ext.clientWritable || []).includes(key)
+  )
+
+  const extraData: any[] = []
+  const extraPatch: any[] = []
+
+  if (serverOwnedKeys.length > 0) {
+    const stripServerOwned = resolve<any, any>(
+      Object.fromEntries(
+        serverOwnedKeys.map((key) => [
+          key,
+          async (value: any, _data: any, context: any) => {
+            if (context?.params?.provider && !isGlobalAdmin(context.params.user)) {
+              return undefined
+            }
+            return value
+          }
+        ])
+      )
+    )
+    extraData.push(stripServerOwned)
+    extraPatch.push(stripServerOwned)
+  }
+
+  if (ext.resolvers?.data) extraData.push(resolve(ext.resolvers.data as any))
+  if (ext.resolvers?.patch) extraPatch.push(resolve(ext.resolvers.patch as any))
+
+  if (extraData.length > 0) schema.extraDataResolvers = extraData
+  if (extraPatch.length > 0) schema.extraPatchResolvers = extraPatch
   if (ext.resolvers?.result) schema.extraResultResolvers = [resolve(ext.resolvers.result as any)]
   if (ext.resolvers?.query) schema.extraQueryResolvers = [resolve(ext.resolvers.query as any)]
 

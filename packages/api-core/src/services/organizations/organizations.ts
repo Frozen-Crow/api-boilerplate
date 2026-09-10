@@ -34,6 +34,7 @@ export {
 export { organizationsPath, organizationsMethods } from './organizations.shared'
 
 import { filterOrganizationsByMembership } from '../../hooks/filter-organizations'
+import { assertOrgMembershipHook, assertOrgPermissionHook } from '../../hooks/assert-org-access'
 import { authenticate } from '@feathersjs/authentication'
 
 const setOwnerAndMember = async (context: any) => {
@@ -123,7 +124,18 @@ export const organizations = (app: Application) => {
         extensions: withExtensionHooks(app, organizationsPath, {
             before: {
                 create: [setOwnerAndMember],
-                find: [filterOrganizationsByMembership()]
+                find: [filterOrganizationsByMembership()],
+                // Multitenant boundary for by-id access: `find` is filtered by
+                // membership, but get/patch/remove must be too. A non-member
+                // must not read another tenant's org; renaming/deleting further
+                // requires the `organizations:patch`/`:remove` permission on the
+                // target org (an ordinary member has neither).
+                get: [assertOrgMembershipHook()],
+                patch: [assertOrgPermissionHook('organizations:patch')],
+                // `update` isn't in organizationsMethods today, but guard it too
+                // so re-adding it can't silently reopen a cross-tenant write.
+                update: [assertOrgPermissionHook('organizations:patch')],
+                remove: [assertOrgPermissionHook('organizations:remove')]
             },
             after: {
                 create: [setActiveOrganization]

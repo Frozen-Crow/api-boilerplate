@@ -75,6 +75,11 @@ export const verifications = (app: Application) => {
         find: [disallow('external')],
         get: [disallow('external')],
         remove: [disallow('external')],
+        // `update` is already excluded from `verificationsMethods`, but guard it
+        // explicitly too: a raw external update is a full account-takeover
+        // primitive (rewrite a token's email/used/expiresAt), so its safety must
+        // not depend on someone never adding 'update' back to the methods list.
+        update: [disallow('external')],
         create: [restrictExternalVerificationCreate, generateVerificationToken]
       },
       around: {
