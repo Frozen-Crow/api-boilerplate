@@ -1,5 +1,6 @@
 import { generateDefaultHooks } from '../../utils/generate-hooks'
 import { resolveServiceSchema } from '../../utils/extend-service'
+import { requireGlobalAdmin } from '../../hooks/require-global-admin'
 
 import {
     rolesDataSchema,
@@ -57,13 +58,21 @@ export const roles = (app: Application) => {
             resultResolver: rolesResolver
         }),
         accessControl: {
-            // Roles are read-only for most users, but maybe editable by admins?
-            // For now, let's allow all auth users to read, but creating/updating roles might need restriction.
-            // Using standard mode for now, team access control handles finding by default?
-            // Actually roles are global, not per organization usually?
-            // If they are global, we might need 'ignore' or specific logic.
-            // Let's assume roles are global for the system.
+            // Roles are GLOBAL (shared across all tenants), so team/org-scoped
+            // access control does not apply — reads (find/get) stay open to any
+            // authenticated user because populate-user-roles and the org
+            // permission checks need them. Writes are NOT open: the
+            // requireGlobalAdmin guards below restrict create/update/patch/remove
+            // to global admins (a shared write otherwise affects every tenant).
             mode: 'ignore'
+        },
+        extensions: {
+            before: {
+                create: [requireGlobalAdmin()],
+                update: [requireGlobalAdmin()],
+                patch: [requireGlobalAdmin()],
+                remove: [requireGlobalAdmin()]
+            }
         }
     }))
 }

@@ -52,6 +52,12 @@ export const configureCore = (app: Application, options?: Partial<CoreOptions>):
         }
       }
     }
+    // Behaviour-only knob that must also apply when mongodb/authSecret come from
+    // the config module (otherwise the block above is skipped and the MongoDB
+    // connect tuning would be silently dropped).
+    if (options.mongoConnect !== undefined) {
+      app.set('mongoConnect' as any, options.mongoConnect)
+    }
     app.set('coreOptions', options as CoreOptions)
   }
 

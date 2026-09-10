@@ -20,6 +20,12 @@ export interface CoreSeedRole {
 export interface CoreOptions {
   /** MongoDB connection string, e.g. mongodb://localhost:27017/my-app */
   mongodb: string
+  /**
+   * Tunables for the initial MongoDB connection (retry budget + driver
+   * timeouts). Useful behind a slow-to-provision network path such as a Cloud
+   * Run VPC connector. See `MongoConnectOptions`.
+   */
+  mongoConnect?: import('./mongodb').MongoConnectOptions
   /** JWT signing secret. Must be strong (>= 32 chars) in production. */
   authSecret: string
 
@@ -159,6 +165,7 @@ export const resolveConfiguration = (options: CoreOptions): ApplicationConfigura
     paginate: options.paginate ?? { default: 10, max: 50 },
     mail: options.mail,
     mongodb: options.mongodb,
+    mongoConnect: options.mongoConnect,
     authentication: mergedAuthentication
   } as ApplicationConfiguration
 }
