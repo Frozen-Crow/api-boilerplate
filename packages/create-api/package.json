@@ -1,6 +1,6 @@
 {
     "name": "@frozencrow/create-api",
-    "version": "0.6.0",
+    "version": "0.6.1",
     "description": "Scaffold a new API project powered by @frozencrow/api-core",
     "license": "MIT",
     "author": "Eric Uldall",
@@ -32,7 +32,8 @@
         "template"
     ],
     "scripts": {
-        "build": "node -e \"process.exit(0)\""
+        "build": "node -e \"process.exit(0)\"",
+        "test": "node --test test/scaffold.test.js"
     },
     "publishConfig": {
         "access": "public"

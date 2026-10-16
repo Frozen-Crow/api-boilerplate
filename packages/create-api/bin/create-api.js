@@ -58,6 +58,31 @@ function copyDir(src, dest) {
   }
 }
 
+// npm names may contain `.` and `~`, but MongoDB database names can't contain
+// `.`, and compose project names allow only [a-z0-9_-] starting with a letter or
+// digit. Derive one safe slug for both.
+function toSlug(name) {
+  const slug = name.toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^[^a-z0-9]+/, '')
+  return slug || 'app'
+}
+
+// MongoDB database names must be under 64 bytes; leave room for the `-test` suffix.
+const MAX_DB_BASE_LENGTH = 58
+
+function updateJson(file, mutate) {
+  if (!fs.existsSync(file)) return
+  const data = JSON.parse(fs.readFileSync(file, 'utf8'))
+  mutate(data)
+  fs.writeFileSync(file, JSON.stringify(data, null, 4) + '\n')
+}
+
+function replaceInFile(file, replacements) {
+  if (!fs.existsSync(file)) return
+  let text = fs.readFileSync(file, 'utf8')
+  for (const [from, to] of replacements) text = text.replace(from, to)
+  fs.writeFileSync(file, text)
+}
+
 function ask(question) {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
   return new Promise((resolve) => rl.question(question, (answer) => {
@@ -142,14 +167,27 @@ async function main() {
   pkg.name = pkgName
   fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 4) + '\n')
 
-  // 2. Personalize config/default.json (app name + database name).
-  const defaultConfigPath = path.join(targetDir, 'config', 'default.json')
-  if (fs.existsSync(defaultConfigPath)) {
-    const cfg = JSON.parse(fs.readFileSync(defaultConfigPath, 'utf8'))
+  // 2. Replace the template's `my-api` everywhere it appears, so each project
+  // gets its own databases and compose project instead of sharing the template's.
+  const slug = toSlug(pkgName)
+  const dbName = slug.slice(0, MAX_DB_BASE_LENGTH)
+
+  updateJson(path.join(targetDir, 'config', 'default.json'), (cfg) => {
     cfg.appName = pkgName
-    cfg.mongodb = `mongodb://localhost:27017/${pkgName}`
-    fs.writeFileSync(defaultConfigPath, JSON.stringify(cfg, null, 4) + '\n')
-  }
+    cfg.mongodb = `mongodb://localhost:27017/${dbName}`
+  })
+  updateJson(path.join(targetDir, 'config', 'test.json'), (cfg) => {
+    cfg.appName = `${pkgName} (test)`
+    cfg.mongodb = `mongodb://localhost:27017/${dbName}-test`
+  })
+  replaceInFile(path.join(targetDir, 'docker-compose.yml'), [
+    [/^name: my-api$/m, `name: ${slug}`],
+    ['mongodb://mongodb:27017/my-api', `mongodb://mongodb:27017/${dbName}`]
+  ])
+  replaceInFile(path.join(targetDir, 'README.md'), [[/^# My API$/m, `# ${pkgName}`]])
+  replaceInFile(path.join(targetDir, 'public', 'index.html'), [
+    ['<title>My API</title>', `<title>${pkgName}</title>`]
+  ])
 
   // 3. Generate a strong secret into config/local.json (git-ignored). The config
   // module (config/*.json) loads local.json last, so this overrides the default
