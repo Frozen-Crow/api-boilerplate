@@ -12,6 +12,11 @@ RUN npm run compile
 # Production stage
 FROM node:20-alpine
 
+# Run as production: api-core refuses to boot with a missing/weak/placeholder
+# AUTH_SECRET only when NODE_ENV=production. (docker-compose.yml overrides this
+# to `development` for local use.)
+ENV NODE_ENV=production
+
 WORKDIR /app
 
 COPY package*.json ./

@@ -32,7 +32,8 @@
         "template"
     ],
     "scripts": {
-        "build": "node -e \"process.exit(0)\""
+        "build": "node -e \"process.exit(0)\"",
+        "test": "node --test test/scaffold.test.js"
     },
     "publishConfig": {
         "access": "public"
